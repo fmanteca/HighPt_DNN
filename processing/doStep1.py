@@ -29,9 +29,8 @@ if __name__ == '__main__':
     
     # STEP2: CLEAR BAD PROPAGATIONS & REMOVE DUPLICATED HITS
 
-    data_DT['prop_Rxy'] = np.sqrt(data_DT.Prop_x*data_DT.Prop_x + data_DT.Prop_y*data_DT.Prop_y)
-    data_CSC['prop_Rxy'] = np.sqrt(data_CSC.Prop_x*data_CSC.Prop_x + data_CSC.Prop_y*data_CSC.Prop_y)
-
+    data_DT.loc[:, 'prop_Rxy'] = np.sqrt(data_DT.Prop_x*data_DT.Prop_x + data_DT.Prop_y*data_DT.Prop_y)
+    data_CSC.loc[:, 'prop_Rxy'] = np.sqrt(data_CSC.Prop_x*data_CSC.Prop_x + data_CSC.Prop_y*data_CSC.Prop_y)
 
     data_DT = data_DT.drop(data_DT[(data_DT.prop_Rxy>810.)].index)
     data_DT = data_DT.drop(data_DT[(data_DT.prop_Rxy > 470.) & (data_DT.prop_Rxy < 490.)].index)
@@ -55,9 +54,9 @@ if __name__ == '__main__':
 
     stations_list = [1,2,3,4]
 
-    for event in data.Hit_Eventid.unique():
-        for muon in data[(data.Hit_Eventid == event)].Hit_Muonid.unique():
-            muon_stations = data[(data.Hit_Eventid == event) & (data.Hit_Muonid == muon)].Hit_DTstation.unique()
+    for event in data_DT.Hit_Eventid.unique():
+        for muon in data_DT[(data_DT.Hit_Eventid == event)].Hit_Muonid.unique():
+            muon_stations = data_DT[(data_DT.Hit_Eventid == event) & (data_DT.Hit_Muonid == muon)].Hit_DTstation.unique()
             for i in stations_list:
                 if not i in muon_stations:
                     data_DT = data_DT.append(pd.DataFrame([[event,muon,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,i,np.nan,np.nan,np.nan]], columns=data_DT.columns))
@@ -70,10 +69,9 @@ if __name__ == '__main__':
 
     # DO THE SAME FOR THE CSC HITS
 
-
-    for event in data.Hit_Eventid.unique():
-        for muon in data[(data.Hit_Eventid == event)].Hit_Muonid.unique():
-            muon_stations = data[(data.Hit_Eventid == event) & (data.Hit_Muonid == muon)].Hit_CSCstation.unique()
+    for event in data_CSC.Hit_Eventid.unique():
+        for muon in data_CSC[(data_CSC.Hit_Eventid == event)].Hit_Muonid.unique():
+            muon_stations = data_CSC[(data_CSC.Hit_Eventid == event) & (data_CSC.Hit_Muonid == muon)].Hit_CSCstation.unique()
             for i in stations_list:
                 if not i in muon_stations:
                     data_CSC = data_CSC.append(pd.DataFrame([[event,muon,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,i,np.nan,np.nan]], columns=data_CSC.columns))
