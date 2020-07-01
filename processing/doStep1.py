@@ -54,8 +54,8 @@ if __name__ == '__main__':
 
     stations_list = [1,2,3,4]
 
-    for event in data_DT.Hit_Eventid.unique():
-        for muon in data_DT[(data_DT.Hit_Eventid == event)].Hit_Muonid.unique():
+    for event in data.Hit_Eventid.unique():
+        for muon in data[(data.Hit_Eventid == event)].Hit_Muonid.unique():
             muon_stations = data_DT[(data_DT.Hit_Eventid == event) & (data_DT.Hit_Muonid == muon)].Hit_DTstation.unique()
             for i in stations_list:
                 if not i in muon_stations:
@@ -69,8 +69,8 @@ if __name__ == '__main__':
 
     # DO THE SAME FOR THE CSC HITS
 
-    for event in data_CSC.Hit_Eventid.unique():
-        for muon in data_CSC[(data_CSC.Hit_Eventid == event)].Hit_Muonid.unique():
+    for event in data.Hit_Eventid.unique():
+        for muon in data[(data.Hit_Eventid == event)].Hit_Muonid.unique():
             muon_stations = data_CSC[(data_CSC.Hit_Eventid == event) & (data_CSC.Hit_Muonid == muon)].Hit_CSCstation.unique()
             for i in stations_list:
                 if not i in muon_stations:
