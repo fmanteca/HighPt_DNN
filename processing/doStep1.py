@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import argparse
 
-# python step1.py --FileNumber test
+# python doStep1.py --FileNumber 1
 
 if __name__ == '__main__':
 
@@ -11,19 +11,45 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     
-    data = pd.read_csv('data/output_Hit_' + args.FileNumber + '.txt', sep="\t", header=None)
-    data.columns = ['Hit_Eventid', 'Hit_Muonid', 'Hit_Hitid', 'Hit_Detid', 'Hit_isDT', 'Hit_isCSC', 'Hit_DTstation', 'Hit_CSCstation', 'Hit_DetElement', 'Hit_x', 'Hit_y', 'Hit_z', 'Hit_distToProp']
+    # STEP1: FIRST I MERGE THE HITS AND PROPS FRAMES
+
+    hits = pd.read_csv('data/output_Hit_' + args.FileNumber + '.txt', sep="\t", header=None)
+    hits.columns = ['Hit_Eventid', 'Hit_Muonid', 'Hit_Hitid', 'Hit_Detid', 'Hit_isDT', 'Hit_isCSC', 'Hit_DTstation', 'Hit_CSCstation', 'Hit_DetElement', 'Hit_x', 'Hit_y', 'Hit_z', 'Hit_distToProp', 'Hit_Compatibility', 'Hit_dirx', 'Hit_diry', 'Hit_dirz', 'Hit_chi2', 'Hit_ndof']
     
-    # GET THE NUMBER OF HITS PER MUON AND PER MUON STATION
+
+    props = pd.read_csv('data/output_Prop_' + args.FileNumber + '.txt', sep="\t", header=None)
+    props.columns = ['Prop_Eventid', 'Prop_Muonid', 'Prop_Detid', 'Prop_isDT', 'Prop_isCSC', 'Prop_DTstation', 'Prop_CSCstation', 'Prop_DetElement', 'Prop_x', 'Prop_y', 'Prop_z']
+
+
+    data = pd.merge(hits, props, left_on=['Hit_Eventid','Hit_Muonid', 'Hit_Detid'], right_on=['Prop_Eventid','Prop_Muonid', 'Prop_Detid'])
+
 
     data_DT = data[(data.Hit_isDT == 1)]
     data_CSC = data[(data.Hit_isCSC == 1)]
+    
+    # STEP2: CLEAR BAD PROPAGATIONS & REMOVE DUPLICATED HITS
+
+    data_DT['prop_Rxy'] = np.sqrt(data_DT.Prop_x*data_DT.Prop_x + data_DT.Prop_y*data_DT.Prop_y)
+    data_CSC['prop_Rxy'] = np.sqrt(data_CSC.Prop_x*data_CSC.Prop_x + data_CSC.Prop_y*data_CSC.Prop_y)
+
+
+    data_DT = data_DT.drop(data_DT[(data_DT.prop_Rxy>810.)].index)
+    data_DT = data_DT.drop(data_DT[(data_DT.prop_Rxy > 470.) & (data_DT.prop_Rxy < 490.)].index)
+    data_DT = data_DT.drop(data_DT[(data_DT.prop_Rxy > 555.) &  (data_DT.prop_Rxy < 590.)].index)
+    data_DT = data_DT.drop(data_DT[(data_DT.prop_Rxy > 670.) & (data_DT.prop_Rxy < 690.)].index)
+
+    data_CSC = data_CSC[(data_CSC.prop_Rxy<720.)]
+    
+    data_DT.drop(data_DT.columns[13:], axis=1, inplace=True)
+    data_CSC.drop(data_CSC.columns[13:], axis=1, inplace=True)
 
     #Drop duplicates:
 
     data_DT = data_DT.groupby(['Hit_Eventid', 'Hit_Muonid', 'Hit_x', 'Hit_y', 'Hit_z'], as_index=False).first()
     data_CSC = data_CSC.groupby(['Hit_Eventid', 'Hit_Muonid', 'Hit_x', 'Hit_y', 'Hit_z'], as_index=False).first()
 
+
+    # STEP3: GET THE NUMBER OF HITS PER MUON AND PER MUON STATION
 
     # If there is not any hit in one station (for each muon in the event), then add hit entry with all the values set to 0.
 
