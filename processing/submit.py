@@ -2,7 +2,7 @@ import os
 import shutil
 
 
-for i in range(1,108):
+for i in range(1,1001):
 
     # f = open('step1_' + str(i) + '.sh', 'w')
     # text = '#!/bin/sh\n'
