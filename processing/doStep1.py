@@ -79,6 +79,24 @@ if __name__ == '__main__':
     muon_nHits_perDTStation = group_DT.count()[['Hit_Eventid', 'Hit_EventluminosityBlock', 'Hit_Muonid','Hit_DTstation','Hit_isDT']].fillna(0) 
     muon_Mean_perDTStation = group_DT.mean()[['Hit_x','Hit_y','Hit_z']].fillna(0.) #fillna(0) for nhits=0 cases 
     muon_Std_perDTStation = group_DT.std()[['Hit_x','Hit_y','Hit_z']].fillna(0.)   #fillna(0) for nhits=1 || nhits=0 cases 
+    
+
+    # Add skew and kurtosis
+    
+    skew_info = []
+    kurt_info = []
+
+    for group in group_DT.groups: 
+        temp = data_DT[(data_DT.Hit_Eventid == group[0]) & (data_DT.Hit_EventluminosityBlock == group[1]) & (data_DT.Hit_Muonid == group[2]) & (data_DT.Hit_DTstation == group[3])]
+        skew = temp.skew(axis = 0)[['Hit_x', 'Hit_y', 'Hit_z']]
+        kurt = temp.kurt(axis = 0)[['Hit_x', 'Hit_y', 'Hit_z']]
+        skew_info.append({"Hit_x_skew":skew['Hit_x'],"Hit_y_skew":skew['Hit_y'], "Hit_z_skew":skew['Hit_z']})
+        kurt_info.append({"Hit_x_kurt":kurt['Hit_x'],"Hit_y_kurt":kurt['Hit_y'], "Hit_z_kurt":kurt['Hit_z']})
+
+
+    muon_Skew_perDTStation = pd.DataFrame(skew_info).fillna(0.)
+    muon_Kurt_perDTStation = pd.DataFrame(kurt_info).fillna(0.)
+
 
     # DO THE SAME FOR THE CSC HITS
 
@@ -98,17 +116,36 @@ if __name__ == '__main__':
     muon_Std_perCSCStation = group_CSC.std()[['Hit_x','Hit_y','Hit_z']].fillna(0.)   #fillna(0) for nhits=1 || nhits=0 cases 
 
 
+    # Add skew and kurtosis
+    
+    skew_info = []
+    kurt_info = []
+
+    for group in group_CSC.groups: 
+        temp = data_CSC[(data_CSC.Hit_Eventid == group[0]) & (data_CSC.Hit_EventluminosityBlock == group[1]) & (data_CSC.Hit_Muonid == group[2]) & (data_CSC.Hit_CSCstation == group[3])]
+        skew = temp.skew(axis = 0)[['Hit_x', 'Hit_y', 'Hit_z']]
+        kurt = temp.kurt(axis = 0)[['Hit_x', 'Hit_y', 'Hit_z']]
+        skew_info.append({"Hit_x_skew":skew['Hit_x'],"Hit_y_skew":skew['Hit_y'], "Hit_z_skew":skew['Hit_z']})
+        kurt_info.append({"Hit_x_kurt":kurt['Hit_x'],"Hit_y_kurt":kurt['Hit_y'], "Hit_z_kurt":kurt['Hit_z']})
+
+
+    muon_Skew_perCSCStation = pd.DataFrame(skew_info).fillna(0.)
+    muon_Kurt_perCSCStation = pd.DataFrame(kurt_info).fillna(0.)
+
+    del temp, skew, kurt, skew_info, kurt_info
+
+
     # ADD VARIABLES TO MUON_* TABLE -> SUM, MEAN, AND STD OF HITS IN EACH MUON STATION
 
-    mergedDT = (muon_nHits_perDTStation.join(muon_Mean_perDTStation)).join(muon_Std_perDTStation,lsuffix='_mean', rsuffix='_std')
+    mergedDT = (muon_nHits_perDTStation.join(muon_Mean_perDTStation)).join(muon_Std_perDTStation,lsuffix='_mean', rsuffix='_std').join(muon_Skew_perDTStation).join(muon_Kurt_perDTStation)
     
     mergedDT_pivoted = pd.pivot_table(mergedDT, index=['Hit_Eventid', 'Hit_EventluminosityBlock', 'Hit_Muonid'], columns='Hit_DTstation')
 
 
-    Muon_DT_s1 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_DT_s1_nhits', 'Muon_DT_s1_x_mean', 'Muon_DT_s1_y_mean', 'Muon_DT_s1_z_mean',  'Muon_DT_s1_x_std', 'Muon_DT_s1_y_std', 'Muon_DT_s1_z_std'])
-    Muon_DT_s2 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_DT_s2_nhits', 'Muon_DT_s2_x_mean', 'Muon_DT_s2_y_mean', 'Muon_DT_s2_z_mean',  'Muon_DT_s2_x_std', 'Muon_DT_s2_y_std', 'Muon_DT_s2_z_std'])
-    Muon_DT_s3 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_DT_s3_nhits', 'Muon_DT_s3_x_mean', 'Muon_DT_s3_y_mean', 'Muon_DT_s3_z_mean',  'Muon_DT_s3_x_std', 'Muon_DT_s3_y_std', 'Muon_DT_s3_z_std'])
-    Muon_DT_s4 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_DT_s4_nhits', 'Muon_DT_s4_x_mean', 'Muon_DT_s4_y_mean', 'Muon_DT_s4_z_mean',  'Muon_DT_s4_x_std', 'Muon_DT_s4_y_std', 'Muon_DT_s4_z_std'])
+    Muon_DT_s1 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_DT_s1_nhits', 'Muon_DT_s1_x_mean', 'Muon_DT_s1_y_mean', 'Muon_DT_s1_z_mean',  'Muon_DT_s1_x_std', 'Muon_DT_s1_y_std', 'Muon_DT_s1_z_std', 'Muon_DT_s1_x_skew', 'Muon_DT_s1_y_skew', 'Muon_DT_s1_z_skew', 'Muon_DT_s1_x_kurt', 'Muon_DT_s1_y_kurt', 'Muon_DT_s1_z_kurt'])
+    Muon_DT_s2 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_DT_s2_nhits', 'Muon_DT_s2_x_mean', 'Muon_DT_s2_y_mean', 'Muon_DT_s2_z_mean',  'Muon_DT_s2_x_std', 'Muon_DT_s2_y_std', 'Muon_DT_s2_z_std', 'Muon_DT_s2_x_skew', 'Muon_DT_s2_y_skew', 'Muon_DT_s2_z_skew', 'Muon_DT_s2_x_kurt', 'Muon_DT_s2_y_kurt', 'Muon_DT_s2_z_kurt'])
+    Muon_DT_s3 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_DT_s3_nhits', 'Muon_DT_s3_x_mean', 'Muon_DT_s3_y_mean', 'Muon_DT_s3_z_mean',  'Muon_DT_s3_x_std', 'Muon_DT_s3_y_std', 'Muon_DT_s3_z_std', 'Muon_DT_s3_x_skew', 'Muon_DT_s3_y_skew', 'Muon_DT_s3_z_skew', 'Muon_DT_s3_x_kurt', 'Muon_DT_s3_y_kurt', 'Muon_DT_s3_z_kurt'])
+    Muon_DT_s4 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_DT_s4_nhits', 'Muon_DT_s4_x_mean', 'Muon_DT_s4_y_mean', 'Muon_DT_s4_z_mean',  'Muon_DT_s4_x_std', 'Muon_DT_s4_y_std', 'Muon_DT_s4_z_std', 'Muon_DT_s4_x_skew', 'Muon_DT_s4_y_skew', 'Muon_DT_s4_z_skew', 'Muon_DT_s4_x_kurt', 'Muon_DT_s4_y_kurt', 'Muon_DT_s4_z_kurt'])
 
     
     
@@ -124,31 +161,37 @@ if __name__ == '__main__':
                     Muon_DT_x_std = mergedDT_pivoted['Hit_x_std'][i].loc[(event, lumi, muon)]
                     Muon_DT_y_std = mergedDT_pivoted['Hit_y_std'][i].loc[(event, lumi, muon)]
                     Muon_DT_z_std = mergedDT_pivoted['Hit_z_std'][i].loc[(event, lumi, muon)]
+                    Muon_DT_x_skew = mergedDT_pivoted['Hit_x_skew'][i].loc[(event, lumi, muon)]
+                    Muon_DT_y_skew = mergedDT_pivoted['Hit_y_skew'][i].loc[(event, lumi, muon)]
+                    Muon_DT_z_skew = mergedDT_pivoted['Hit_z_skew'][i].loc[(event, lumi, muon)]
+                    Muon_DT_x_kurt = mergedDT_pivoted['Hit_x_kurt'][i].loc[(event, lumi, muon)]
+                    Muon_DT_y_kurt = mergedDT_pivoted['Hit_y_kurt'][i].loc[(event, lumi, muon)]
+                    Muon_DT_z_kurt = mergedDT_pivoted['Hit_z_kurt'][i].loc[(event, lumi, muon)]
                     if i == 1:
-                        Muon_DT_s1 = Muon_DT_s1.append(pd.DataFrame([[event,lumi,muon,Muon_DT_nhits,Muon_DT_x_mean,Muon_DT_y_mean,Muon_DT_z_mean,Muon_DT_x_std,Muon_DT_y_std,Muon_DT_z_std]], columns=Muon_DT_s1.columns))
+                        Muon_DT_s1 = Muon_DT_s1.append(pd.DataFrame([[event,lumi,muon,Muon_DT_nhits,Muon_DT_x_mean,Muon_DT_y_mean,Muon_DT_z_mean,Muon_DT_x_std,Muon_DT_y_std,Muon_DT_z_std,Muon_DT_x_skew,Muon_DT_y_skew,Muon_DT_z_skew,Muon_DT_x_kurt,Muon_DT_y_kurt,Muon_DT_z_kurt]], columns=Muon_DT_s1.columns))
                     elif i == 2:
-                        Muon_DT_s2 = Muon_DT_s2.append(pd.DataFrame([[event,lumi,muon,Muon_DT_nhits,Muon_DT_x_mean,Muon_DT_y_mean,Muon_DT_z_mean,Muon_DT_x_std,Muon_DT_y_std,Muon_DT_z_std]], columns=Muon_DT_s2.columns)) 
+                        Muon_DT_s2 = Muon_DT_s2.append(pd.DataFrame([[event,lumi,muon,Muon_DT_nhits,Muon_DT_x_mean,Muon_DT_y_mean,Muon_DT_z_mean,Muon_DT_x_std,Muon_DT_y_std,Muon_DT_z_std,Muon_DT_x_skew,Muon_DT_y_skew,Muon_DT_z_skew,Muon_DT_x_kurt,Muon_DT_y_kurt,Muon_DT_z_kurt]], columns=Muon_DT_s2.columns))
                     elif i == 3:
-                        Muon_DT_s3 = Muon_DT_s3.append(pd.DataFrame([[event,lumi,muon,Muon_DT_nhits,Muon_DT_x_mean,Muon_DT_y_mean,Muon_DT_z_mean,Muon_DT_x_std,Muon_DT_y_std,Muon_DT_z_std]], columns=Muon_DT_s3.columns))         
+                        Muon_DT_s3 = Muon_DT_s3.append(pd.DataFrame([[event,lumi,muon,Muon_DT_nhits,Muon_DT_x_mean,Muon_DT_y_mean,Muon_DT_z_mean,Muon_DT_x_std,Muon_DT_y_std,Muon_DT_z_std,Muon_DT_x_skew,Muon_DT_y_skew,Muon_DT_z_skew,Muon_DT_x_kurt,Muon_DT_y_kurt,Muon_DT_z_kurt]], columns=Muon_DT_s3.columns))
                     elif i == 4:
-                        Muon_DT_s4 = Muon_DT_s4.append(pd.DataFrame([[event,lumi,muon,Muon_DT_nhits,Muon_DT_x_mean,Muon_DT_y_mean,Muon_DT_z_mean,Muon_DT_x_std,Muon_DT_y_std,Muon_DT_z_std]], columns=Muon_DT_s4.columns))
+                        Muon_DT_s4 = Muon_DT_s4.append(pd.DataFrame([[event,lumi,muon,Muon_DT_nhits,Muon_DT_x_mean,Muon_DT_y_mean,Muon_DT_z_mean,Muon_DT_x_std,Muon_DT_y_std,Muon_DT_z_std,Muon_DT_x_skew,Muon_DT_y_skew,Muon_DT_z_skew,Muon_DT_x_kurt,Muon_DT_y_kurt,Muon_DT_z_kurt]], columns=Muon_DT_s4.columns))
+
      
 
 
 
+    mergedCSC = (muon_nHits_perCSCStation.join(muon_Mean_perCSCStation)).join(muon_Std_perCSCStation,lsuffix='_mean', rsuffix='_std').join(muon_Skew_perCSCStation).join(muon_Kurt_perCSCStation)
+    
+    mergedCSC_pivoted = pd.pivot_table(mergedCSC, index=['Hit_Eventid', 'Hit_EventluminosityBlock', 'Hit_Muonid'], columns='Hit_CSCstation')
 
 
-    mergedCSC = (muon_nHits_perCSCStation.join(muon_Mean_perCSCStation)).join(muon_Std_perCSCStation,lsuffix='_mean', rsuffix='_std')
+    Muon_CSC_s1 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_CSC_s1_nhits', 'Muon_CSC_s1_x_mean', 'Muon_CSC_s1_y_mean', 'Muon_CSC_s1_z_mean',  'Muon_CSC_s1_x_std', 'Muon_CSC_s1_y_std', 'Muon_CSC_s1_z_std', 'Muon_CSC_s1_x_skew', 'Muon_CSC_s1_y_skew', 'Muon_CSC_s1_z_skew', 'Muon_CSC_s1_x_kurt', 'Muon_CSC_s1_y_kurt', 'Muon_CSC_s1_z_kurt'])
+    Muon_CSC_s2 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_CSC_s2_nhits', 'Muon_CSC_s2_x_mean', 'Muon_CSC_s2_y_mean', 'Muon_CSC_s2_z_mean',  'Muon_CSC_s2_x_std', 'Muon_CSC_s2_y_std', 'Muon_CSC_s2_z_std', 'Muon_CSC_s2_x_skew', 'Muon_CSC_s2_y_skew', 'Muon_CSC_s2_z_skew', 'Muon_CSC_s2_x_kurt', 'Muon_CSC_s2_y_kurt', 'Muon_CSC_s2_z_kurt'])
+    Muon_CSC_s3 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_CSC_s3_nhits', 'Muon_CSC_s3_x_mean', 'Muon_CSC_s3_y_mean', 'Muon_CSC_s3_z_mean',  'Muon_CSC_s3_x_std', 'Muon_CSC_s3_y_std', 'Muon_CSC_s3_z_std', 'Muon_CSC_s3_x_skew', 'Muon_CSC_s3_y_skew', 'Muon_CSC_s3_z_skew', 'Muon_CSC_s3_x_kurt', 'Muon_CSC_s3_y_kurt', 'Muon_CSC_s3_z_kurt'])
+    Muon_CSC_s4 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_CSC_s4_nhits', 'Muon_CSC_s4_x_mean', 'Muon_CSC_s4_y_mean', 'Muon_CSC_s4_z_mean',  'Muon_CSC_s4_x_std', 'Muon_CSC_s4_y_std', 'Muon_CSC_s4_z_std', 'Muon_CSC_s4_x_skew', 'Muon_CSC_s4_y_skew', 'Muon_CSC_s4_z_skew', 'Muon_CSC_s4_x_kurt', 'Muon_CSC_s4_y_kurt', 'Muon_CSC_s4_z_kurt'])
 
-    mergedCSC_pivoted = pd.pivot_table(mergedCSC, index=['Hit_Eventid', 'Hit_EventluminosityBlock','Hit_Muonid'], columns='Hit_CSCstation')
-
-
-    Muon_CSC_s1 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_CSC_s1_nhits', 'Muon_CSC_s1_x_mean', 'Muon_CSC_s1_y_mean', 'Muon_CSC_s1_z_mean',  'Muon_CSC_s1_x_std', 'Muon_CSC_s1_y_std', 'Muon_CSC_s1_z_std'])
-    Muon_CSC_s2 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_CSC_s2_nhits', 'Muon_CSC_s2_x_mean', 'Muon_CSC_s2_y_mean', 'Muon_CSC_s2_z_mean',  'Muon_CSC_s2_x_std', 'Muon_CSC_s2_y_std', 'Muon_CSC_s2_z_std'])
-    Muon_CSC_s3 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_CSC_s3_nhits', 'Muon_CSC_s3_x_mean', 'Muon_CSC_s3_y_mean', 'Muon_CSC_s3_z_mean',  'Muon_CSC_s3_x_std', 'Muon_CSC_s3_y_std', 'Muon_CSC_s3_z_std'])
-    Muon_CSC_s4 = pd.DataFrame(columns = ['Muon_Eventid', 'Muon_EventluminosityBlock', 'Muon_Muonid','Muon_CSC_s4_nhits', 'Muon_CSC_s4_x_mean', 'Muon_CSC_s4_y_mean', 'Muon_CSC_s4_z_mean',  'Muon_CSC_s4_x_std', 'Muon_CSC_s4_y_std', 'Muon_CSC_s4_z_std'])
-
-
+    
+    
 
     for event in mergedCSC.Hit_Eventid.unique():
         for lumi in mergedCSC[(mergedCSC.Hit_Eventid == event)].Hit_EventluminosityBlock.unique():
@@ -161,14 +204,21 @@ if __name__ == '__main__':
                     Muon_CSC_x_std = mergedCSC_pivoted['Hit_x_std'][i].loc[(event, lumi, muon)]
                     Muon_CSC_y_std = mergedCSC_pivoted['Hit_y_std'][i].loc[(event, lumi, muon)]
                     Muon_CSC_z_std = mergedCSC_pivoted['Hit_z_std'][i].loc[(event, lumi, muon)]
+                    Muon_CSC_x_skew = mergedCSC_pivoted['Hit_x_skew'][i].loc[(event, lumi, muon)]
+                    Muon_CSC_y_skew = mergedCSC_pivoted['Hit_y_skew'][i].loc[(event, lumi, muon)]
+                    Muon_CSC_z_skew = mergedCSC_pivoted['Hit_z_skew'][i].loc[(event, lumi, muon)]
+                    Muon_CSC_x_kurt = mergedCSC_pivoted['Hit_x_kurt'][i].loc[(event, lumi, muon)]
+                    Muon_CSC_y_kurt = mergedCSC_pivoted['Hit_y_kurt'][i].loc[(event, lumi, muon)]
+                    Muon_CSC_z_kurt = mergedCSC_pivoted['Hit_z_kurt'][i].loc[(event, lumi, muon)]
                     if i == 1:
-                        Muon_CSC_s1 = Muon_CSC_s1.append(pd.DataFrame([[event,lumi,muon,Muon_CSC_nhits,Muon_CSC_x_mean,Muon_CSC_y_mean,Muon_CSC_z_mean,Muon_CSC_x_std,Muon_CSC_y_std,Muon_CSC_z_std]], columns=Muon_CSC_s1.columns))
+                        Muon_CSC_s1 = Muon_CSC_s1.append(pd.DataFrame([[event,lumi,muon,Muon_CSC_nhits,Muon_CSC_x_mean,Muon_CSC_y_mean,Muon_CSC_z_mean,Muon_CSC_x_std,Muon_CSC_y_std,Muon_CSC_z_std,Muon_CSC_x_skew,Muon_CSC_y_skew,Muon_CSC_z_skew,Muon_CSC_x_kurt,Muon_CSC_y_kurt,Muon_CSC_z_kurt]], columns=Muon_CSC_s1.columns))
                     elif i == 2:
-                        Muon_CSC_s2 = Muon_CSC_s2.append(pd.DataFrame([[event,lumi,muon,Muon_CSC_nhits,Muon_CSC_x_mean,Muon_CSC_y_mean,Muon_CSC_z_mean,Muon_CSC_x_std,Muon_CSC_y_std,Muon_CSC_z_std]], columns=Muon_CSC_s2.columns)) 
+                        Muon_CSC_s2 = Muon_CSC_s2.append(pd.DataFrame([[event,lumi,muon,Muon_CSC_nhits,Muon_CSC_x_mean,Muon_CSC_y_mean,Muon_CSC_z_mean,Muon_CSC_x_std,Muon_CSC_y_std,Muon_CSC_z_std,Muon_CSC_x_skew,Muon_CSC_y_skew,Muon_CSC_z_skew,Muon_CSC_x_kurt,Muon_CSC_y_kurt,Muon_CSC_z_kurt]], columns=Muon_CSC_s2.columns))
                     elif i == 3:
-                        Muon_CSC_s3 = Muon_CSC_s3.append(pd.DataFrame([[event,lumi,muon,Muon_CSC_nhits,Muon_CSC_x_mean,Muon_CSC_y_mean,Muon_CSC_z_mean,Muon_CSC_x_std,Muon_CSC_y_std,Muon_CSC_z_std]], columns=Muon_CSC_s3.columns))         
+                        Muon_CSC_s3 = Muon_CSC_s3.append(pd.DataFrame([[event,lumi,muon,Muon_CSC_nhits,Muon_CSC_x_mean,Muon_CSC_y_mean,Muon_CSC_z_mean,Muon_CSC_x_std,Muon_CSC_y_std,Muon_CSC_z_std,Muon_CSC_x_skew,Muon_CSC_y_skew,Muon_CSC_z_skew,Muon_CSC_x_kurt,Muon_CSC_y_kurt,Muon_CSC_z_kurt]], columns=Muon_CSC_s3.columns))
                     elif i == 4:
-                        Muon_CSC_s4 = Muon_CSC_s4.append(pd.DataFrame([[event,lumi,muon,Muon_CSC_nhits,Muon_CSC_x_mean,Muon_CSC_y_mean,Muon_CSC_z_mean,Muon_CSC_x_std,Muon_CSC_y_std,Muon_CSC_z_std]], columns=Muon_CSC_s4.columns))
+                        Muon_CSC_s4 = Muon_CSC_s4.append(pd.DataFrame([[event,lumi,muon,Muon_CSC_nhits,Muon_CSC_x_mean,Muon_CSC_y_mean,Muon_CSC_z_mean,Muon_CSC_x_std,Muon_CSC_y_std,Muon_CSC_z_std,Muon_CSC_x_skew,Muon_CSC_y_skew,Muon_CSC_z_skew,Muon_CSC_x_kurt,Muon_CSC_y_kurt,Muon_CSC_z_kurt]], columns=Muon_CSC_s4.columns))
+
      
 
     # MERGE THE DATAFRAMES AND STORE THE OUTPUT
