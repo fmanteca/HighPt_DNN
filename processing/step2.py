@@ -1,7 +1,7 @@
 import pandas as pd
 import glob
 
-all_files = glob.glob("/gpfs/users/mantecap/CMSSW_9_4_4/src/MyAnalysis/DNN/processing/STEP1/*.csv")
+all_files = glob.glob("STEP1/*.csv")
 
 hits = []
 
@@ -13,7 +13,7 @@ frame_hits = pd.concat(hits, ignore_index=True)
 
 
 
-all_muonMeans = glob.glob("/gpfs/users/mantecap/CMSSW_9_4_4/src/MyAnalysis/DNN/processing/CLEANED_SEGMENTS/*.csv")
+all_muonMeans = glob.glob("CLEANED_SEGMENTS/*.csv")
 
 muonMeans = []
 
